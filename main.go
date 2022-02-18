@@ -61,7 +61,7 @@ type Config struct {
 	FilesToUpload string          `env:"files_to_upload"`
 	APIURL        string          `env:"api_base_url,required"`
 	UploadURL     string          `env:"upload_base_url,required"`
-	GenerateReleaseNotes    string  `env:"generate_release_notes,opt[yes,no]""`
+	GenerateReleaseNotes    string  `env:"generate_release_notes,opt[yes,no]"`
 }
 
 type releaseAsset struct {
