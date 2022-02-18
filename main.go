@@ -122,7 +122,7 @@ func main() {
 		Body:            &c.Body,
 		Draft:           &isDraft,
 		Prerelease:      &isPreRelease,
-		AutoGenerateReleaseNotes:   &isAutoGenerateReleaseNotes
+		AutoGenerateReleaseNotes:   &isAutoGenerateReleaseNotes,
 	}
 
 	_, owner, repo := parseRepo(c.RepositoryURL)
