@@ -95,10 +95,10 @@ inputs:
       - "yes"
       - "no"
     is_required: false
-- auto_generate_release_notes: "no"
+- generate_release_notes: "no"
   opts:
-    title: Auto Generate Release Notes
-    summary: If 'yes' is selected, the body of the release will be auto generated.
+    title: Generate Release Notes
+    summary: If 'yes' is selected, the body of the release will be generated.
     description: |-
       Whether to automatically generate the name and body for this release.
       If name is specified, the specified name will be used; otherwise, a name will be automatically generated.
