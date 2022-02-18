@@ -12,10 +12,10 @@ import (
 
 // ListBlockedUsers lists all the blocked users by the authenticated user.
 //
-// GitHub API docs: https://developer.github.com/v3/users/blocking/#list-blocked-users
-func (s *UsersService) ListBlockedUsers(ctx context.Context, opt *ListOptions) ([]*User, *Response, error) {
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/users/#list-users-blocked-by-the-authenticated-user
+func (s *UsersService) ListBlockedUsers(ctx context.Context, opts *ListOptions) ([]*User, *Response, error) {
 	u := "user/blocks"
-	u, err := addOptions(u, opt)
+	u, err := addOptions(u, opts)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -39,7 +39,7 @@ func (s *UsersService) ListBlockedUsers(ctx context.Context, opt *ListOptions) (
 
 // IsBlocked reports whether specified user is blocked by the authenticated user.
 //
-// GitHub API docs: https://developer.github.com/v3/users/blocking/#check-whether-youve-blocked-a-user
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/users/#check-if-a-user-is-blocked-by-the-authenticated-user
 func (s *UsersService) IsBlocked(ctx context.Context, user string) (bool, *Response, error) {
 	u := fmt.Sprintf("user/blocks/%v", user)
 
@@ -58,7 +58,7 @@ func (s *UsersService) IsBlocked(ctx context.Context, user string) (bool, *Respo
 
 // BlockUser blocks specified user for the authenticated user.
 //
-// GitHub API docs: https://developer.github.com/v3/users/blocking/#block-a-user
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/users/#block-a-user
 func (s *UsersService) BlockUser(ctx context.Context, user string) (*Response, error) {
 	u := fmt.Sprintf("user/blocks/%v", user)
 
@@ -75,7 +75,7 @@ func (s *UsersService) BlockUser(ctx context.Context, user string) (*Response, e
 
 // UnblockUser unblocks specified user for the authenticated user.
 //
-// GitHub API docs: https://developer.github.com/v3/users/blocking/#unblock-a-user
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/users/#unblock-a-user
 func (s *UsersService) UnblockUser(ctx context.Context, user string) (*Response, error) {
 	u := fmt.Sprintf("user/blocks/%v", user)
 

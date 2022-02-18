@@ -10,7 +10,7 @@ import (
 	"fmt"
 )
 
-// AdminStats represents a variety of stats of a Github Enterprise
+// AdminStats represents a variety of stats of a GitHub Enterprise
 // installation.
 type AdminStats struct {
 	Issues     *IssueStats     `json:"issues,omitempty"`
@@ -108,7 +108,7 @@ func (s UserStats) String() string {
 	return Stringify(s)
 }
 
-//GistStats represents the number of total, private and public gists.
+// GistStats represents the number of total, private and public gists.
 type GistStats struct {
 	TotalGists   *int `json:"total_gists,omitempty"`
 	PrivateGists *int `json:"private_gists,omitempty"`
@@ -147,13 +147,13 @@ func (s RepoStats) String() string {
 	return Stringify(s)
 }
 
-// GetAdminStats returns a variety of metrics about a Github Enterprise
+// GetAdminStats returns a variety of metrics about a GitHub Enterprise
 // installation.
 //
 // Please note that this is only available to site administrators,
 // otherwise it will error with a 404 not found (instead of 401 or 403).
 //
-// GitHub API docs: https://developer.github.com/v3/enterprise-admin/admin_stats/
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/enterprise-admin/admin_stats/
 func (s *AdminService) GetAdminStats(ctx context.Context) (*AdminStats, *Response, error) {
 	u := fmt.Sprintf("enterprise/stats/all")
 	req, err := s.client.NewRequest("GET", u, nil)

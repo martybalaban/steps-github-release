@@ -13,15 +13,16 @@ import (
 // ListFollowers lists the followers for a user. Passing the empty string will
 // fetch followers for the authenticated user.
 //
-// GitHub API docs: https://developer.github.com/v3/users/followers/#list-followers-of-a-user
-func (s *UsersService) ListFollowers(ctx context.Context, user string, opt *ListOptions) ([]*User, *Response, error) {
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/users/#list-followers-of-the-authenticated-user
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/users/#list-followers-of-a-user
+func (s *UsersService) ListFollowers(ctx context.Context, user string, opts *ListOptions) ([]*User, *Response, error) {
 	var u string
 	if user != "" {
 		u = fmt.Sprintf("users/%v/followers", user)
 	} else {
 		u = "user/followers"
 	}
-	u, err := addOptions(u, opt)
+	u, err := addOptions(u, opts)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -43,15 +44,16 @@ func (s *UsersService) ListFollowers(ctx context.Context, user string, opt *List
 // ListFollowing lists the people that a user is following. Passing the empty
 // string will list people the authenticated user is following.
 //
-// GitHub API docs: https://developer.github.com/v3/users/followers/#list-users-followed-by-another-user
-func (s *UsersService) ListFollowing(ctx context.Context, user string, opt *ListOptions) ([]*User, *Response, error) {
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/users/#list-the-people-the-authenticated-user-follows
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/users/#list-the-people-a-user-follows
+func (s *UsersService) ListFollowing(ctx context.Context, user string, opts *ListOptions) ([]*User, *Response, error) {
 	var u string
 	if user != "" {
 		u = fmt.Sprintf("users/%v/following", user)
 	} else {
 		u = "user/following"
 	}
-	u, err := addOptions(u, opt)
+	u, err := addOptions(u, opts)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -73,7 +75,8 @@ func (s *UsersService) ListFollowing(ctx context.Context, user string, opt *List
 // IsFollowing checks if "user" is following "target". Passing the empty
 // string for "user" will check if the authenticated user is following "target".
 //
-// GitHub API docs: https://developer.github.com/v3/users/followers/#check-if-you-are-following-a-user
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/users/#check-if-a-person-is-followed-by-the-authenticated-user
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/users/#check-if-a-user-follows-another-user
 func (s *UsersService) IsFollowing(ctx context.Context, user, target string) (bool, *Response, error) {
 	var u string
 	if user != "" {
@@ -94,7 +97,7 @@ func (s *UsersService) IsFollowing(ctx context.Context, user, target string) (bo
 
 // Follow will cause the authenticated user to follow the specified user.
 //
-// GitHub API docs: https://developer.github.com/v3/users/followers/#follow-a-user
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/users/#follow-a-user
 func (s *UsersService) Follow(ctx context.Context, user string) (*Response, error) {
 	u := fmt.Sprintf("user/following/%v", user)
 	req, err := s.client.NewRequest("PUT", u, nil)
@@ -107,7 +110,7 @@ func (s *UsersService) Follow(ctx context.Context, user string) (*Response, erro
 
 // Unfollow will cause the authenticated user to unfollow the specified user.
 //
-// GitHub API docs: https://developer.github.com/v3/users/followers/#unfollow-a-user
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/users/#unfollow-a-user
 func (s *UsersService) Unfollow(ctx context.Context, user string) (*Response, error) {
 	u := fmt.Sprintf("user/following/%v", user)
 	req, err := s.client.NewRequest("DELETE", u, nil)

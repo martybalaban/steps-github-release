@@ -13,38 +13,42 @@ import (
 // UsersService handles communication with the user related
 // methods of the GitHub API.
 //
-// GitHub API docs: https://developer.github.com/v3/users/
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/users/
 type UsersService service
 
 // User represents a GitHub user.
 type User struct {
-	Login             *string    `json:"login,omitempty"`
-	ID                *int64     `json:"id,omitempty"`
-	AvatarURL         *string    `json:"avatar_url,omitempty"`
-	HTMLURL           *string    `json:"html_url,omitempty"`
-	GravatarID        *string    `json:"gravatar_id,omitempty"`
-	Name              *string    `json:"name,omitempty"`
-	Company           *string    `json:"company,omitempty"`
-	Blog              *string    `json:"blog,omitempty"`
-	Location          *string    `json:"location,omitempty"`
-	Email             *string    `json:"email,omitempty"`
-	Hireable          *bool      `json:"hireable,omitempty"`
-	Bio               *string    `json:"bio,omitempty"`
-	PublicRepos       *int       `json:"public_repos,omitempty"`
-	PublicGists       *int       `json:"public_gists,omitempty"`
-	Followers         *int       `json:"followers,omitempty"`
-	Following         *int       `json:"following,omitempty"`
-	CreatedAt         *Timestamp `json:"created_at,omitempty"`
-	UpdatedAt         *Timestamp `json:"updated_at,omitempty"`
-	SuspendedAt       *Timestamp `json:"suspended_at,omitempty"`
-	Type              *string    `json:"type,omitempty"`
-	SiteAdmin         *bool      `json:"site_admin,omitempty"`
-	TotalPrivateRepos *int       `json:"total_private_repos,omitempty"`
-	OwnedPrivateRepos *int       `json:"owned_private_repos,omitempty"`
-	PrivateGists      *int       `json:"private_gists,omitempty"`
-	DiskUsage         *int       `json:"disk_usage,omitempty"`
-	Collaborators     *int       `json:"collaborators,omitempty"`
-	Plan              *Plan      `json:"plan,omitempty"`
+	Login                   *string    `json:"login,omitempty"`
+	ID                      *int64     `json:"id,omitempty"`
+	NodeID                  *string    `json:"node_id,omitempty"`
+	AvatarURL               *string    `json:"avatar_url,omitempty"`
+	HTMLURL                 *string    `json:"html_url,omitempty"`
+	GravatarID              *string    `json:"gravatar_id,omitempty"`
+	Name                    *string    `json:"name,omitempty"`
+	Company                 *string    `json:"company,omitempty"`
+	Blog                    *string    `json:"blog,omitempty"`
+	Location                *string    `json:"location,omitempty"`
+	Email                   *string    `json:"email,omitempty"`
+	Hireable                *bool      `json:"hireable,omitempty"`
+	Bio                     *string    `json:"bio,omitempty"`
+	TwitterUsername         *string    `json:"twitter_username,omitempty"`
+	PublicRepos             *int       `json:"public_repos,omitempty"`
+	PublicGists             *int       `json:"public_gists,omitempty"`
+	Followers               *int       `json:"followers,omitempty"`
+	Following               *int       `json:"following,omitempty"`
+	CreatedAt               *Timestamp `json:"created_at,omitempty"`
+	UpdatedAt               *Timestamp `json:"updated_at,omitempty"`
+	SuspendedAt             *Timestamp `json:"suspended_at,omitempty"`
+	Type                    *string    `json:"type,omitempty"`
+	SiteAdmin               *bool      `json:"site_admin,omitempty"`
+	TotalPrivateRepos       *int       `json:"total_private_repos,omitempty"`
+	OwnedPrivateRepos       *int       `json:"owned_private_repos,omitempty"`
+	PrivateGists            *int       `json:"private_gists,omitempty"`
+	DiskUsage               *int       `json:"disk_usage,omitempty"`
+	Collaborators           *int       `json:"collaborators,omitempty"`
+	TwoFactorAuthentication *bool      `json:"two_factor_authentication,omitempty"`
+	Plan                    *Plan      `json:"plan,omitempty"`
+	LdapDn                  *string    `json:"ldap_dn,omitempty"`
 
 	// API URLs
 	URL               *string `json:"url,omitempty"`
@@ -59,12 +63,12 @@ type User struct {
 	SubscriptionsURL  *string `json:"subscriptions_url,omitempty"`
 
 	// TextMatches is only populated from search results that request text matches
-	// See: search.go and https://developer.github.com/v3/search/#text-match-metadata
-	TextMatches []TextMatch `json:"text_matches,omitempty"`
+	// See: search.go and https://docs.github.com/en/free-pro-team@latest/rest/reference/search/#text-match-metadata
+	TextMatches []*TextMatch `json:"text_matches,omitempty"`
 
 	// Permissions identifies the permissions that a user has on a given
 	// repository. This is only populated when calling Repositories.ListCollaborators.
-	Permissions *map[string]bool `json:"permissions,omitempty"`
+	Permissions map[string]bool `json:"permissions,omitempty"`
 }
 
 func (u User) String() string {
@@ -74,7 +78,8 @@ func (u User) String() string {
 // Get fetches a user. Passing the empty string will fetch the authenticated
 // user.
 //
-// GitHub API docs: https://developer.github.com/v3/users/#get-a-single-user
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/users/#get-the-authenticated-user
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/users/#get-a-user
 func (s *UsersService) Get(ctx context.Context, user string) (*User, *Response, error) {
 	var u string
 	if user != "" {
@@ -117,7 +122,7 @@ func (s *UsersService) GetByID(ctx context.Context, id int64) (*User, *Response,
 
 // Edit the authenticated user.
 //
-// GitHub API docs: https://developer.github.com/v3/users/#update-the-authenticated-user
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/users/#update-the-authenticated-user
 func (s *UsersService) Edit(ctx context.Context, user *User) (*User, *Response, error) {
 	u := "user"
 	req, err := s.client.NewRequest("PATCH", u, user)
@@ -134,12 +139,62 @@ func (s *UsersService) Edit(ctx context.Context, user *User) (*User, *Response, 
 	return uResp, resp, nil
 }
 
+// HovercardOptions specifies optional parameters to the UsersService.GetHovercard
+// method.
+type HovercardOptions struct {
+	// SubjectType specifies the additional information to be received about the hovercard.
+	// Possible values are: organization, repository, issue, pull_request. (Required when using subject_id.)
+	SubjectType string `url:"subject_type"`
+
+	// SubjectID specifies the ID for the SubjectType. (Required when using subject_type.)
+	SubjectID string `url:"subject_id"`
+}
+
+// Hovercard represents hovercard information about a user.
+type Hovercard struct {
+	Contexts []*UserContext `json:"contexts,omitempty"`
+}
+
+// UserContext represents the contextual information about user.
+type UserContext struct {
+	Message *string `json:"message,omitempty"`
+	Octicon *string `json:"octicon,omitempty"`
+}
+
+// GetHovercard fetches contextual information about user. It requires authentication
+// via Basic Auth or via OAuth with the repo scope.
+//
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/users/#get-contextual-information-for-a-user
+func (s *UsersService) GetHovercard(ctx context.Context, user string, opts *HovercardOptions) (*Hovercard, *Response, error) {
+	u := fmt.Sprintf("users/%v/hovercard", user)
+	u, err := addOptions(u, opts)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	req, err := s.client.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	hc := new(Hovercard)
+	resp, err := s.client.Do(ctx, req, hc)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return hc, resp, nil
+}
+
 // UserListOptions specifies optional parameters to the UsersService.ListAll
 // method.
 type UserListOptions struct {
 	// ID of the last user seen
 	Since int64 `url:"since,omitempty"`
 
+	// Note: Pagination is powered exclusively by the Since parameter,
+	// ListOptions.Page has no effect.
+	// ListOptions.PerPage controls an undocumented GitHub API parameter.
 	ListOptions
 }
 
@@ -147,9 +202,9 @@ type UserListOptions struct {
 //
 // To paginate through all users, populate 'Since' with the ID of the last user.
 //
-// GitHub API docs: https://developer.github.com/v3/users/#get-all-users
-func (s *UsersService) ListAll(ctx context.Context, opt *UserListOptions) ([]*User, *Response, error) {
-	u, err := addOptions("users", opt)
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/users/#list-users
+func (s *UsersService) ListAll(ctx context.Context, opts *UserListOptions) ([]*User, *Response, error) {
+	u, err := addOptions("users", opts)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -171,9 +226,9 @@ func (s *UsersService) ListAll(ctx context.Context, opt *UserListOptions) ([]*Us
 // ListInvitations lists all currently-open repository invitations for the
 // authenticated user.
 //
-// GitHub API docs: https://developer.github.com/v3/repos/invitations/#list-a-users-repository-invitations
-func (s *UsersService) ListInvitations(ctx context.Context, opt *ListOptions) ([]*RepositoryInvitation, *Response, error) {
-	u, err := addOptions("user/repository_invitations", opt)
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/repos/#list-repository-invitations-for-the-authenticated-user
+func (s *UsersService) ListInvitations(ctx context.Context, opts *ListOptions) ([]*RepositoryInvitation, *Response, error) {
+	u, err := addOptions("user/repository_invitations", opts)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -182,9 +237,6 @@ func (s *UsersService) ListInvitations(ctx context.Context, opt *ListOptions) ([
 	if err != nil {
 		return nil, nil, err
 	}
-
-	// TODO: remove custom Accept header when this API fully launches.
-	req.Header.Set("Accept", mediaTypeRepositoryInvitationsPreview)
 
 	invites := []*RepositoryInvitation{}
 	resp, err := s.client.Do(ctx, req, &invites)
@@ -198,7 +250,7 @@ func (s *UsersService) ListInvitations(ctx context.Context, opt *ListOptions) ([
 // AcceptInvitation accepts the currently-open repository invitation for the
 // authenticated user.
 //
-// GitHub API docs: https://developer.github.com/v3/repos/invitations/#accept-a-repository-invitation
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/repos/#accept-a-repository-invitation
 func (s *UsersService) AcceptInvitation(ctx context.Context, invitationID int64) (*Response, error) {
 	u := fmt.Sprintf("user/repository_invitations/%v", invitationID)
 	req, err := s.client.NewRequest("PATCH", u, nil)
@@ -206,25 +258,19 @@ func (s *UsersService) AcceptInvitation(ctx context.Context, invitationID int64)
 		return nil, err
 	}
 
-	// TODO: remove custom Accept header when this API fully launches.
-	req.Header.Set("Accept", mediaTypeRepositoryInvitationsPreview)
-
 	return s.client.Do(ctx, req, nil)
 }
 
 // DeclineInvitation declines the currently-open repository invitation for the
 // authenticated user.
 //
-// GitHub API docs: https://developer.github.com/v3/repos/invitations/#decline-a-repository-invitation
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/repos/#decline-a-repository-invitation
 func (s *UsersService) DeclineInvitation(ctx context.Context, invitationID int64) (*Response, error) {
 	u := fmt.Sprintf("user/repository_invitations/%v", invitationID)
 	req, err := s.client.NewRequest("DELETE", u, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO: remove custom Accept header when this API fully launches.
-	req.Header.Set("Accept", mediaTypeRepositoryInvitationsPreview)
 
 	return s.client.Do(ctx, req, nil)
 }
