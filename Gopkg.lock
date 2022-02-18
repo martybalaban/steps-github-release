@@ -33,14 +33,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:647669ae41992972521014b20edbaa9e9fe375ef14bad17b55655a7a86e1c8ce"
-  name = "github.com/google/go-github"
-  packages = ["github"]
-  pruneopts = "UT"
-  revision = "d1858a3fc4bf8620cec6b7ed608a63de0572ce87"
-
-[[projects]]
-  branch = "master"
   digest = "1:a63cff6b5d8b95638bfe300385d93b2a6d9d687734b863da8e09dc834510a690"
   name = "github.com/google/go-querystring"
   packages = ["query"]
