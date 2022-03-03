@@ -143,6 +143,12 @@ func main() {
 	}
 }
 
+func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
+	cmd := command.New("envman", "add", "--key", keyStr)
+	cmd.SetStdin(strings.NewReader(valueStr))
+	return cmd.Run()
+}
+
 func parseFilesListConfig(fileList string) ([]releaseAsset, error) {
 	var assets []releaseAsset
 	if filelist := strings.TrimSpace(fileList); filelist != "" {
