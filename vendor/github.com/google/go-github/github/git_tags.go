@@ -8,7 +8,6 @@ package github
 import (
 	"context"
 	"fmt"
-	"strings"
 )
 
 // Tag represents a tag object.
@@ -34,19 +33,15 @@ type createTagRequest struct {
 	Tagger  *CommitAuthor `json:"tagger,omitempty"`
 }
 
-// GetTag fetchs a tag from a repo given a SHA.
+// GetTag fetches a tag from a repo given a SHA.
 //
-// GitHub API docs: https://developer.github.com/v3/git/tags/#get-a-tag
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/git/#get-a-tag
 func (s *GitService) GetTag(ctx context.Context, owner string, repo string, sha string) (*Tag, *Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/git/tags/%v", owner, repo, sha)
 	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, nil, err
 	}
-
-	// TODO: remove custom Accept headers when APIs fully launch.
-	acceptHeaders := []string{mediaTypeGitSigningPreview, mediaTypeGraphQLNodeIDPreview}
-	req.Header.Set("Accept", strings.Join(acceptHeaders, ", "))
 
 	tag := new(Tag)
 	resp, err := s.client.Do(ctx, req, tag)
@@ -55,7 +50,7 @@ func (s *GitService) GetTag(ctx context.Context, owner string, repo string, sha 
 
 // CreateTag creates a tag object.
 //
-// GitHub API docs: https://developer.github.com/v3/git/tags/#create-a-tag-object
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/git/#create-a-tag-object
 func (s *GitService) CreateTag(ctx context.Context, owner string, repo string, tag *Tag) (*Tag, *Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/git/tags", owner, repo)
 
@@ -74,9 +69,6 @@ func (s *GitService) CreateTag(ctx context.Context, owner string, repo string, t
 	if err != nil {
 		return nil, nil, err
 	}
-
-	// TODO: remove custom Accept header when this API fully launches.
-	req.Header.Set("Accept", mediaTypeGraphQLNodeIDPreview)
 
 	t := new(Tag)
 	resp, err := s.client.Do(ctx, req, t)

@@ -8,7 +8,6 @@ package github
 import (
 	"context"
 	"fmt"
-	"strings"
 )
 
 // ProjectListOptions specifies the optional parameters to the
@@ -22,10 +21,10 @@ type ProjectListOptions struct {
 
 // ListProjects lists the projects for a repo.
 //
-// GitHub API docs: https://developer.github.com/v3/projects/#list-repository-projects
-func (s *RepositoriesService) ListProjects(ctx context.Context, owner, repo string, opt *ProjectListOptions) ([]*Project, *Response, error) {
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/projects/#list-repository-projects
+func (s *RepositoriesService) ListProjects(ctx context.Context, owner, repo string, opts *ProjectListOptions) ([]*Project, *Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/projects", owner, repo)
-	u, err := addOptions(u, opt)
+	u, err := addOptions(u, opts)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -36,8 +35,7 @@ func (s *RepositoriesService) ListProjects(ctx context.Context, owner, repo stri
 	}
 
 	// TODO: remove custom Accept headers when APIs fully launch.
-	acceptHeaders := []string{mediaTypeProjectsPreview, mediaTypeGraphQLNodeIDPreview}
-	req.Header.Set("Accept", strings.Join(acceptHeaders, ", "))
+	req.Header.Set("Accept", mediaTypeProjectsPreview)
 
 	var projects []*Project
 	resp, err := s.client.Do(ctx, req, &projects)
@@ -50,17 +48,16 @@ func (s *RepositoriesService) ListProjects(ctx context.Context, owner, repo stri
 
 // CreateProject creates a GitHub Project for the specified repository.
 //
-// GitHub API docs: https://developer.github.com/v3/projects/#create-a-repository-project
-func (s *RepositoriesService) CreateProject(ctx context.Context, owner, repo string, opt *ProjectOptions) (*Project, *Response, error) {
+// GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/projects/#create-a-repository-project
+func (s *RepositoriesService) CreateProject(ctx context.Context, owner, repo string, opts *ProjectOptions) (*Project, *Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/projects", owner, repo)
-	req, err := s.client.NewRequest("POST", u, opt)
+	req, err := s.client.NewRequest("POST", u, opts)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// TODO: remove custom Accept headers when APIs fully launch.
-	acceptHeaders := []string{mediaTypeProjectsPreview, mediaTypeGraphQLNodeIDPreview}
-	req.Header.Set("Accept", strings.Join(acceptHeaders, ", "))
+	req.Header.Set("Accept", mediaTypeProjectsPreview)
 
 	project := &Project{}
 	resp, err := s.client.Do(ctx, req, project)

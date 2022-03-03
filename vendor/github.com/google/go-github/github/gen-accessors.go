@@ -3,12 +3,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:build ignore
 // +build ignore
 
 // gen-accessors generates accessor methods for structs with pointer fields.
 //
-// It is meant to be used by the go-github authors in conjunction with the
-// go generate tool before sending a commit to GitHub.
+// It is meant to be used by go-github contributors in conjunction with the
+// go generate tool before sending a PR to GitHub.
+// Please see the CONTRIBUTING.md file for more information.
 package main
 
 import (
@@ -35,9 +37,10 @@ var (
 	verbose = flag.Bool("v", false, "Print verbose log messages")
 
 	sourceTmpl = template.Must(template.New("source").Parse(source))
+	testTmpl   = template.Must(template.New("test").Parse(test))
 
-	// blacklistStructMethod lists "struct.method" combos to skip.
-	blacklistStructMethod = map[string]bool{
+	// skipStructMethods lists "struct.method" combos to skip.
+	skipStructMethods = map[string]bool{
 		"RepositoryContent.GetContent":    true,
 		"Client.GetBaseURL":               true,
 		"Client.GetUploadURL":             true,
@@ -45,8 +48,8 @@ var (
 		"RateLimitError.GetResponse":      true,
 		"AbuseRateLimitError.GetResponse": true,
 	}
-	// blacklistStruct lists structs to skip.
-	blacklistStruct = map[string]bool{
+	// skipStructs lists structs to skip.
+	skipStructs = map[string]bool{
 		"Client": true,
 	}
 )
@@ -103,9 +106,9 @@ func (t *templateData) processAST(f *ast.File) error {
 				logf("Struct %v is unexported; skipping.", ts.Name)
 				continue
 			}
-			// Check if the struct is blacklisted.
-			if blacklistStruct[ts.Name.Name] {
-				logf("Struct %v is blacklisted; skipping.", ts.Name)
+			// Check if the struct should be skipped.
+			if skipStructs[ts.Name.Name] {
+				logf("Struct %v is in skip list; skipping.", ts.Name)
 				continue
 			}
 			st, ok := ts.Type.(*ast.StructType)
@@ -113,8 +116,7 @@ func (t *templateData) processAST(f *ast.File) error {
 				continue
 			}
 			for _, field := range st.Fields.List {
-				se, ok := field.Type.(*ast.StarExpr)
-				if len(field.Names) == 0 || !ok {
+				if len(field.Names) == 0 {
 					continue
 				}
 
@@ -124,9 +126,21 @@ func (t *templateData) processAST(f *ast.File) error {
 					logf("Field %v is unexported; skipping.", fieldName)
 					continue
 				}
-				// Check if "struct.method" is blacklisted.
-				if key := fmt.Sprintf("%v.Get%v", ts.Name, fieldName); blacklistStructMethod[key] {
-					logf("Method %v is blacklisted; skipping.", key)
+				// Check if "struct.method" should be skipped.
+				if key := fmt.Sprintf("%v.Get%v", ts.Name, fieldName); skipStructMethods[key] {
+					logf("Method %v is skip list; skipping.", key)
+					continue
+				}
+
+				se, ok := field.Type.(*ast.StarExpr)
+				if !ok {
+					switch x := field.Type.(type) {
+					case *ast.MapType:
+						t.addMapType(x, ts.Name.String(), fieldName.String(), false)
+						continue
+					}
+
+					logf("Skipping field type %T, fieldName=%v", field.Type, fieldName)
 					continue
 				}
 
@@ -136,7 +150,7 @@ func (t *templateData) processAST(f *ast.File) error {
 				case *ast.Ident:
 					t.addIdent(x, ts.Name.String(), fieldName.String())
 				case *ast.MapType:
-					t.addMapType(x, ts.Name.String(), fieldName.String())
+					t.addMapType(x, ts.Name.String(), fieldName.String(), true)
 				case *ast.SelectorExpr:
 					t.addSelectorExpr(x, ts.Name.String(), fieldName.String())
 				default:
@@ -161,17 +175,28 @@ func (t *templateData) dump() error {
 	// Sort getters by ReceiverType.FieldName.
 	sort.Sort(byName(t.Getters))
 
-	var buf bytes.Buffer
-	if err := sourceTmpl.Execute(&buf, t); err != nil {
-		return err
-	}
-	clean, err := format.Source(buf.Bytes())
-	if err != nil {
-		return err
+	processTemplate := func(tmpl *template.Template, filename string) error {
+		var buf bytes.Buffer
+		if err := tmpl.Execute(&buf, t); err != nil {
+			return err
+		}
+		clean, err := format.Source(buf.Bytes())
+		if err != nil {
+			return fmt.Errorf("format.Source:\n%v\n%v", buf.String(), err)
+		}
+
+		logf("Writing %v...", filename)
+		if err := ioutil.WriteFile(filename, clean, 0644); err != nil {
+			return err
+		}
+
+		return nil
 	}
 
-	logf("Writing %v...", t.filename)
-	return ioutil.WriteFile(t.filename, clean, 0644)
+	if err := processTemplate(sourceTmpl, t.filename); err != nil {
+		return err
+	}
+	return processTemplate(testTmpl, strings.ReplaceAll(t.filename, ".go", "_test.go"))
 }
 
 func newGetter(receiverType, fieldName, fieldType, zeroValue string, namedStruct bool) *getter {
@@ -219,7 +244,7 @@ func (t *templateData) addIdent(x *ast.Ident, receiverType, fieldName string) {
 	t.Getters = append(t.Getters, newGetter(receiverType, fieldName, x.String(), zeroValue, namedStruct))
 }
 
-func (t *templateData) addMapType(x *ast.MapType, receiverType, fieldName string) {
+func (t *templateData) addMapType(x *ast.MapType, receiverType, fieldName string, isAPointer bool) {
 	var keyType string
 	switch key := x.Key.(type) {
 	case *ast.Ident:
@@ -240,7 +265,9 @@ func (t *templateData) addMapType(x *ast.MapType, receiverType, fieldName string
 
 	fieldType := fmt.Sprintf("map[%v]%v", keyType, valueType)
 	zeroValue := fmt.Sprintf("map[%v]%v{}", keyType, valueType)
-	t.Getters = append(t.Getters, newGetter(receiverType, fieldName, fieldType, zeroValue, false))
+	ng := newGetter(receiverType, fieldName, fieldType, zeroValue, false)
+	ng.MapType = !isAPointer
+	t.Getters = append(t.Getters, ng)
 }
 
 func (t *templateData) addSelectorExpr(x *ast.SelectorExpr, receiverType, fieldName string) {
@@ -287,6 +314,7 @@ type getter struct {
 	FieldType    string
 	ZeroValue    string
 	NamedStruct  bool // Getter for named struct.
+	MapType      bool
 }
 
 type byName []*getter
@@ -319,6 +347,14 @@ func ({{.ReceiverVar}} *{{.ReceiverType}}) Get{{.FieldName}}() *{{.FieldType}} {
   }
   return {{.ReceiverVar}}.{{.FieldName}}
 }
+{{else if .MapType}}
+// Get{{.FieldName}} returns the {{.FieldName}} map if it's non-nil, an empty map otherwise.
+func ({{.ReceiverVar}} *{{.ReceiverType}}) Get{{.FieldName}}() {{.FieldType}} {
+  if {{.ReceiverVar}} == nil || {{.ReceiverVar}}.{{.FieldName}} == nil {
+    return {{.ZeroValue}}
+  }
+  return {{.ReceiverVar}}.{{.FieldName}}
+}
 {{else}}
 // Get{{.FieldName}} returns the {{.FieldName}} field if it's non-nil, zero value otherwise.
 func ({{.ReceiverVar}} *{{.ReceiverType}}) Get{{.FieldName}}() {{.FieldType}} {
@@ -326,6 +362,54 @@ func ({{.ReceiverVar}} *{{.ReceiverType}}) Get{{.FieldName}}() {{.FieldType}} {
     return {{.ZeroValue}}
   }
   return *{{.ReceiverVar}}.{{.FieldName}}
+}
+{{end}}
+{{end}}
+`
+
+const test = `// Copyright {{.Year}} The go-github AUTHORS. All rights reserved.
+//
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+// Code generated by gen-accessors; DO NOT EDIT.
+
+package {{.Package}}
+{{with .Imports}}
+import (
+  "testing"
+  {{range . -}}
+  "{{.}}"
+  {{end -}}
+)
+{{end}}
+{{range .Getters}}
+{{if .NamedStruct}}
+func Test{{.ReceiverType}}_Get{{.FieldName}}(tt *testing.T) {
+  {{.ReceiverVar}} := &{{.ReceiverType}}{}
+  {{.ReceiverVar}}.Get{{.FieldName}}()
+  {{.ReceiverVar}} = nil
+  {{.ReceiverVar}}.Get{{.FieldName}}()
+}
+{{else if .MapType}}
+func Test{{.ReceiverType}}_Get{{.FieldName}}(tt *testing.T) {
+  zeroValue := {{.FieldType}}{}
+  {{.ReceiverVar}} := &{{.ReceiverType}}{ {{.FieldName}}: zeroValue }
+  {{.ReceiverVar}}.Get{{.FieldName}}()
+  {{.ReceiverVar}} = &{{.ReceiverType}}{}
+  {{.ReceiverVar}}.Get{{.FieldName}}()
+  {{.ReceiverVar}} = nil
+  {{.ReceiverVar}}.Get{{.FieldName}}()
+}
+{{else}}
+func Test{{.ReceiverType}}_Get{{.FieldName}}(tt *testing.T) {
+  var zeroValue {{.FieldType}}
+  {{.ReceiverVar}} := &{{.ReceiverType}}{ {{.FieldName}}: &zeroValue }
+  {{.ReceiverVar}}.Get{{.FieldName}}()
+  {{.ReceiverVar}} = &{{.ReceiverType}}{}
+  {{.ReceiverVar}}.Get{{.FieldName}}()
+  {{.ReceiverVar}} = nil
+  {{.ReceiverVar}}.Get{{.FieldName}}()
 }
 {{end}}
 {{end}}
