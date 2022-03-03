@@ -148,9 +148,11 @@ func main() {
 }
 
 func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
-	cmd := command.New("envman", "add", "--key", keyStr)
-	cmd.SetStdin(strings.NewReader(valueStr))
-	return cmd.Run()
+    c := exec.Command("envman", "add", "--key", keyStr, "--value", valueStr)
+    err := c.Run()
+    if err != nil {
+      // Handle error
+    }
 }
 
 func parseFilesListConfig(fileList string) ([]releaseAsset, error) {
