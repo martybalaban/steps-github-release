@@ -135,6 +135,9 @@ func main() {
 	log.Infof("Release created:")
 	log.Printf(newRelease.GetHTMLURL())
 
+    exportEnvironmentWithEnvman("RELEASE_NAME", newRelease.GetName());
+    exportEnvironmentWithEnvman("RELEASE_BODY", newRelease.GetBody());
+
 	if err := uploadFileListWithRetry(filelist, client, owner, repo, newRelease.GetID()); err != nil {
 		failf("error during upload: %s", err)
 	}
