@@ -12,7 +12,7 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-tools/go-steputils/stepconf"
-	"github.com/google/go-github/github"
+    "github.com/google/go-github/v43/github"
 )
 
 // formats:
