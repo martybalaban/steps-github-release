@@ -113,7 +113,7 @@ func main() {
 
 	isDraft := c.Draft == "yes"
 	isPreRelease := c.PreRelease == "yes"
-	isGenerateReleaseNotes := c.generate_release_notes == "yes"
+	isGenerateReleaseNotes := c.GenerateReleaseNotes == "yes"
 
 	release := &github.RepositoryRelease{
 		TagName:         &c.Tag,
