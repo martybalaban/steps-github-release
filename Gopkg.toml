@@ -4,7 +4,7 @@
 
 [[constraint]]
   name = "github.com/google/go-github"
-  branch = "master"
+  version = "43.0.0"
 
 [[constraint]]
   name = "golang.org/x/oauth2"
