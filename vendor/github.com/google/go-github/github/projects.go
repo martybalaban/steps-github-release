@@ -18,20 +18,18 @@ type ProjectsService service
 
 // Project represents a GitHub Project.
 type Project struct {
-	ID                     *int64     `json:"id,omitempty"`
-	URL                    *string    `json:"url,omitempty"`
-	HTMLURL                *string    `json:"html_url,omitempty"`
-	ColumnsURL             *string    `json:"columns_url,omitempty"`
-	OwnerURL               *string    `json:"owner_url,omitempty"`
-	Name                   *string    `json:"name,omitempty"`
-	Body                   *string    `json:"body,omitempty"`
-	Number                 *int       `json:"number,omitempty"`
-	State                  *string    `json:"state,omitempty"`
-	CreatedAt              *Timestamp `json:"created_at,omitempty"`
-	UpdatedAt              *Timestamp `json:"updated_at,omitempty"`
-	NodeID                 *string    `json:"node_id,omitempty"`
-	OrganizationPermission *string    `json:"organization_permission,omitempty"`
-	Private                *bool      `json:"private,omitempty"`
+	ID         *int64     `json:"id,omitempty"`
+	URL        *string    `json:"url,omitempty"`
+	HTMLURL    *string    `json:"html_url,omitempty"`
+	ColumnsURL *string    `json:"columns_url,omitempty"`
+	OwnerURL   *string    `json:"owner_url,omitempty"`
+	Name       *string    `json:"name,omitempty"`
+	Body       *string    `json:"body,omitempty"`
+	Number     *int       `json:"number,omitempty"`
+	State      *string    `json:"state,omitempty"`
+	CreatedAt  *Timestamp `json:"created_at,omitempty"`
+	UpdatedAt  *Timestamp `json:"updated_at,omitempty"`
+	NodeID     *string    `json:"node_id,omitempty"`
 
 	// The User object that generated the project.
 	Creator *User `json:"creator,omitempty"`
@@ -85,7 +83,7 @@ type ProjectOptions struct {
 	// Sets visibility of the project within the organization.
 	// Setting visibility is only available
 	// for organization projects.(Optional.)
-	Private *bool `json:"private,omitempty"`
+	Public *bool `json:"public,omitempty"`
 }
 
 // UpdateProject updates a repository project.

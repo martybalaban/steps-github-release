@@ -297,13 +297,10 @@ func TestParseWebHook(t *testing.T) {
 			payload:     &DeploymentEvent{},
 			messageType: "deployment",
 		},
+
 		{
 			payload:     &DeploymentStatusEvent{},
 			messageType: "deployment_status",
-		},
-		{
-			payload:     &DiscussionEvent{},
-			messageType: "discussion",
 		},
 		{
 			payload:     &ForkEvent{},
@@ -424,10 +421,6 @@ func TestParseWebHook(t *testing.T) {
 		{
 			payload:     &RepositoryVulnerabilityAlertEvent{},
 			messageType: "repository_vulnerability_alert",
-		},
-		{
-			payload:     &SecretScanningAlertEvent{},
-			messageType: "secret_scanning_alert",
 		},
 		{
 			payload:     &StarEvent{},

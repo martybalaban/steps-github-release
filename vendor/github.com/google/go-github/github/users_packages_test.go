@@ -74,7 +74,7 @@ func TestUsersService_specifiedUser_ListPackages(t *testing.T) {
 	client, mux, _, teardown := setup()
 	defer teardown()
 
-	mux.HandleFunc("/users/u/packages", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/user/u/packages", func(w http.ResponseWriter, r *http.Request) {
 		testMethod(t, r, "GET")
 		testFormValues(t, r, values{"package_type": "container", "visibility": "public"})
 		fmt.Fprint(w, `[{
@@ -363,10 +363,7 @@ func TestUsersService_Authenticated_ListPackagesVersions(t *testing.T) {
 	})
 
 	ctx := context.Background()
-	opts := &PackageListOptions{
-		String("internal"), String("container"), String("deleted"), ListOptions{Page: 1, PerPage: 2},
-	}
-	packages, _, err := client.Users.PackageGetAllVersions(ctx, "", "container", "hello_docker", opts)
+	packages, _, err := client.Users.PackageGetAllVersions(ctx, "", "container", "hello_docker")
 	if err != nil {
 		t.Errorf("Users.Authenticated_PackageGetAllVersions returned error: %v", err)
 	}
@@ -392,12 +389,12 @@ func TestUsersService_Authenticated_ListPackagesVersions(t *testing.T) {
 
 	const methodName = "PackageGetAllVersions"
 	testBadOptions(t, methodName, func() (err error) {
-		_, _, err = client.Users.PackageGetAllVersions(ctx, "\n", "", "", &PackageListOptions{})
+		_, _, err = client.Users.PackageGetAllVersions(ctx, "\n", "", "")
 		return err
 	})
 
 	testNewRequestAndDoFailure(t, methodName, client, func() (*Response, error) {
-		got, resp, err := client.Users.PackageGetAllVersions(ctx, "", "", "", &PackageListOptions{})
+		got, resp, err := client.Users.PackageGetAllVersions(ctx, "", "", "")
 		if got != nil {
 			t.Errorf("testNewRequestAndDoFailure %v = %#v, want nil", methodName, got)
 		}
@@ -432,10 +429,7 @@ func TestUsersService_specifiedUser_ListPackagesVersions(t *testing.T) {
 	})
 
 	ctx := context.Background()
-	opts := &PackageListOptions{
-		String("internal"), String("container"), String("deleted"), ListOptions{Page: 1, PerPage: 2},
-	}
-	packages, _, err := client.Users.PackageGetAllVersions(ctx, "u", "container", "hello_docker", opts)
+	packages, _, err := client.Users.PackageGetAllVersions(ctx, "u", "container", "hello_docker")
 	if err != nil {
 		t.Errorf("Users.specifiedUser_PackageGetAllVersions returned error: %v", err)
 	}
@@ -461,12 +455,12 @@ func TestUsersService_specifiedUser_ListPackagesVersions(t *testing.T) {
 
 	const methodName = "PackageGetAllVersions"
 	testBadOptions(t, methodName, func() (err error) {
-		_, _, err = client.Users.PackageGetAllVersions(ctx, "\n", "", "", &PackageListOptions{})
+		_, _, err = client.Users.PackageGetAllVersions(ctx, "\n", "", "")
 		return err
 	})
 
 	testNewRequestAndDoFailure(t, methodName, client, func() (*Response, error) {
-		got, resp, err := client.Users.PackageGetAllVersions(ctx, "", "", "", &PackageListOptions{})
+		got, resp, err := client.Users.PackageGetAllVersions(ctx, "", "", "")
 		if got != nil {
 			t.Errorf("testNewRequestAndDoFailure %v = %#v, want nil", methodName, got)
 		}

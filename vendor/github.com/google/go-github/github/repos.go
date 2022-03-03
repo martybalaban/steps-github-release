@@ -8,15 +8,10 @@ package github
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 )
-
-const githubBranchNotProtected string = "Branch not protected"
-
-var ErrBranchNotProtected = errors.New("branch is not protected")
 
 // RepositoriesService handles communication with the repository related
 // methods of the GitHub API.
@@ -66,7 +61,6 @@ type Repository struct {
 	AllowSquashMerge    *bool           `json:"allow_squash_merge,omitempty"`
 	AllowMergeCommit    *bool           `json:"allow_merge_commit,omitempty"`
 	AllowAutoMerge      *bool           `json:"allow_auto_merge,omitempty"`
-	AllowForking        *bool           `json:"allow_forking,omitempty"`
 	DeleteBranchOnMerge *bool           `json:"delete_branch_on_merge,omitempty"`
 	Topics              []string        `json:"topics,omitempty"`
 	Archived            *bool           `json:"archived,omitempty"`
@@ -85,9 +79,6 @@ type Repository struct {
 	IsTemplate        *bool   `json:"is_template,omitempty"`
 	LicenseTemplate   *string `json:"license_template,omitempty"`
 	GitignoreTemplate *string `json:"gitignore_template,omitempty"`
-
-	// Options for configuring Advanced Security and Secret Scanning
-	SecurityAndAnalysis *SecurityAndAnalysis `json:"security_and_analysis,omitempty"`
 
 	// Creating an organization repository. Required for non-owners.
 	TeamID *int64 `json:"team_id,omitempty"`
@@ -190,39 +181,6 @@ type RepositoryListOptions struct {
 	Direction string `url:"direction,omitempty"`
 
 	ListOptions
-}
-
-// SecurityAndAnalysis specifies the optional advanced security features
-// that are enabled on a given repository.
-type SecurityAndAnalysis struct {
-	AdvancedSecurity *AdvancedSecurity `json:"advanced_security,omitempty"`
-	SecretScanning   *SecretScanning   `json:"secret_scanning,omitempty"`
-}
-
-func (s SecurityAndAnalysis) String() string {
-	return Stringify(s)
-}
-
-// AdvancedSecurity specifies the state of advanced security on a repository.
-//
-// GitHub API docs: https://docs.github.com/en/github/getting-started-with-github/learning-about-github/about-github-advanced-security
-type AdvancedSecurity struct {
-	Status *string `json:"status,omitempty"`
-}
-
-func (a AdvancedSecurity) String() string {
-	return Stringify(a)
-}
-
-// SecretScanning specifies the state of secret scanning on a repository.
-//
-// GitHub API docs: https://docs.github.com/en/code-security/secret-security/about-secret-scanning
-type SecretScanning struct {
-	Status *string `json:"status,omitempty"`
-}
-
-func (s SecretScanning) String() string {
-	return Stringify(s)
 }
 
 // List the repositories for a user. Passing the empty string will list
@@ -364,7 +322,6 @@ type createRepoRequest struct {
 	AllowMergeCommit    *bool   `json:"allow_merge_commit,omitempty"`
 	AllowRebaseMerge    *bool   `json:"allow_rebase_merge,omitempty"`
 	AllowAutoMerge      *bool   `json:"allow_auto_merge,omitempty"`
-	AllowForking        *bool   `json:"allow_forking,omitempty"`
 	DeleteBranchOnMerge *bool   `json:"delete_branch_on_merge,omitempty"`
 }
 
@@ -408,7 +365,6 @@ func (s *RepositoriesService) Create(ctx context.Context, org string, repo *Repo
 		AllowMergeCommit:    repo.AllowMergeCommit,
 		AllowRebaseMerge:    repo.AllowRebaseMerge,
 		AllowAutoMerge:      repo.AllowAutoMerge,
-		AllowForking:        repo.AllowForking,
 		DeleteBranchOnMerge: repo.DeleteBranchOnMerge,
 	}
 
@@ -877,33 +833,14 @@ type RequiredStatusChecks struct {
 	// Require branches to be up to date before merging. (Required.)
 	Strict bool `json:"strict"`
 	// The list of status checks to require in order to merge into this
-	// branch. (Deprecated. Note: only one of Contexts/Checks can be populated,
-	// but at least one must be populated).
-	Contexts []string `json:"contexts,omitempty"`
-	// The list of status checks to require in order to merge into this
-	// branch.
-	Checks []*RequiredStatusCheck `json:"checks,omitempty"`
+	// branch. (Required; use []string{} instead of nil for empty list.)
+	Contexts []string `json:"contexts"`
 }
 
 // RequiredStatusChecksRequest represents a request to edit a protected branch's status checks.
 type RequiredStatusChecksRequest struct {
-	Strict *bool `json:"strict,omitempty"`
-	// Note: if both Contexts and Checks are populated,
-	// the GitHub API will only use Checks.
-	Contexts []string               `json:"contexts,omitempty"`
-	Checks   []*RequiredStatusCheck `json:"checks,omitempty"`
-}
-
-// RequiredStatusCheck represents a status check of a protected branch.
-type RequiredStatusCheck struct {
-	// The name of the required check.
-	Context string `json:"context"`
-	// The ID of the GitHub App that must provide this check.
-	// Omit this field to automatically select the GitHub App
-	// that has recently provided this check,
-	// or any app if it was not set by a GitHub App.
-	// Pass -1 to explicitly allow any app to set the status.
-	AppID *int64 `json:"app_id,omitempty"`
+	Strict   *bool    `json:"strict,omitempty"`
+	Contexts []string `json:"contexts,omitempty"`
 }
 
 // PullRequestReviewsEnforcement represents the pull request reviews enforcement of a protected branch.
@@ -944,10 +881,10 @@ type PullRequestReviewsEnforcementUpdate struct {
 	DismissalRestrictionsRequest *DismissalRestrictionsRequest `json:"dismissal_restrictions,omitempty"`
 	// Specifies if approved reviews can be dismissed automatically, when a new commit is pushed. Can be omitted.
 	DismissStaleReviews *bool `json:"dismiss_stale_reviews,omitempty"`
-	// RequireCodeOwnerReviews specifies if merging pull requests is blocked until code owners have reviewed.
-	RequireCodeOwnerReviews *bool `json:"require_code_owner_reviews,omitempty"`
+	// RequireCodeOwnerReviews specifies if an approved review is required in pull requests including files with a designated code owner.
+	RequireCodeOwnerReviews bool `json:"require_code_owner_reviews,omitempty"`
 	// RequiredApprovingReviewCount specifies the number of approvals required before the pull request can be merged.
-	// Valid values are 1 - 6 or 0 to not require reviewers.
+	// Valid values are 1 - 6.
 	RequiredApprovingReviewCount int `json:"required_approving_review_count"`
 }
 
@@ -1100,34 +1037,6 @@ func (s *RepositoriesService) getBranchFromURL(ctx context.Context, u string, fo
 	return resp, err
 }
 
-// renameBranchRequest represents a request to rename a branch.
-type renameBranchRequest struct {
-	NewName string `json:"new_name"`
-}
-
-// RenameBranch renames a branch in a repository.
-//
-// To rename a non-default branch: Users must have push access. GitHub Apps must have the `contents:write` repository permission.
-// To rename the default branch: Users must have admin or owner permissions. GitHub Apps must have the `administration:write` repository permission.
-//
-// GitHub API docs: https://docs.github.com/en/rest/reference/repos#rename-a-branch
-func (s *RepositoriesService) RenameBranch(ctx context.Context, owner, repo, branch, newName string) (*Branch, *Response, error) {
-	u := fmt.Sprintf("repos/%v/%v/branches/%v/rename", owner, repo, branch)
-	r := &renameBranchRequest{NewName: newName}
-	req, err := s.client.NewRequest("POST", u, r)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	b := new(Branch)
-	resp, err := s.client.Do(ctx, req, b)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return b, resp, nil
-}
-
 // GetBranchProtection gets the protection of a given branch.
 //
 // GitHub API docs: https://docs.github.com/en/free-pro-team@latest/rest/reference/repos/#get-branch-protection
@@ -1144,9 +1053,6 @@ func (s *RepositoriesService) GetBranchProtection(ctx context.Context, owner, re
 	p := new(Protection)
 	resp, err := s.client.Do(ctx, req, p)
 	if err != nil {
-		if isBranchNotProtected(err) {
-			err = ErrBranchNotProtected
-		}
 		return nil, resp, err
 	}
 
@@ -1166,9 +1072,6 @@ func (s *RepositoriesService) GetRequiredStatusChecks(ctx context.Context, owner
 	p := new(RequiredStatusChecks)
 	resp, err := s.client.Do(ctx, req, p)
 	if err != nil {
-		if isBranchNotProtected(err) {
-			err = ErrBranchNotProtected
-		}
 		return nil, resp, err
 	}
 
@@ -1187,9 +1090,6 @@ func (s *RepositoriesService) ListRequiredStatusChecksContexts(ctx context.Conte
 
 	resp, err = s.client.Do(ctx, req, &contexts)
 	if err != nil {
-		if isBranchNotProtected(err) {
-			err = ErrBranchNotProtected
-		}
 		return nil, resp, err
 	}
 
@@ -1682,11 +1582,4 @@ func (s *RepositoriesService) Dispatch(ctx context.Context, owner, repo string, 
 	}
 
 	return r, resp, nil
-}
-
-// isBranchNotProtected determines whether a branch is not protected
-// based on the error message returned by GitHub API.
-func isBranchNotProtected(err error) bool {
-	errorResponse, ok := err.(*ErrorResponse)
-	return ok && errorResponse.Message == githubBranchNotProtected
 }

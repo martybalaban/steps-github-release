@@ -89,10 +89,10 @@ func TestProjectsService_UpdateProject(t *testing.T) {
 	defer teardown()
 
 	input := &ProjectOptions{
-		Name:    String("Project Name"),
-		Body:    String("Project body."),
-		State:   String("open"),
-		Private: Bool(false),
+		Name:   String("Project Name"),
+		Body:   String("Project body."),
+		State:  String("open"),
+		Public: Bool(true),
 
 		OrganizationPermission: String("read"),
 	}
@@ -857,7 +857,7 @@ func TestProjectOptions_Marshal(t *testing.T) {
 		Body:                   String("body"),
 		State:                  String("state"),
 		OrganizationPermission: String("op"),
-		Private:                Bool(false),
+		Public:                 Bool(true),
 	}
 
 	want := `{
@@ -865,7 +865,7 @@ func TestProjectOptions_Marshal(t *testing.T) {
 		"body": "body",
 		"state": "state",
 		"organization_permission": "op",
-		"private": false
+		"public": true
 	}`
 
 	testJSONMarshal(t, u, want)

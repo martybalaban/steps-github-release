@@ -48,21 +48,6 @@ const (
 	mediaTypeIssueImportAPI    = "application/vnd.github.golden-comet-preview+json"
 
 	// Media Type values to access preview APIs
-	// These media types will be added to the API request as headers
-	// and used to enable particular features on GitHub API that are still in preview.
-	// After some time, specific media types will be promoted (to a "stable" state).
-	// From then on, the preview headers are not required anymore to activate the additional
-	// feature on GitHub.com's API. However, this API header might still be needed for users
-	// to run a GitHub Enterprise Server on-premise.
-	// It's not uncommon for GitHub Enterprise Server customers to run older versions which
-	// would probably rely on the preview headers for some time.
-	// While the header promotion is going out for GitHub.com, it may be some time before it
-	// even arrives in GitHub Enterprise Server.
-	// We keep those preview headers around to avoid breaking older GitHub Enterprise Server
-	// versions. Additionally, non-functional (preview) headers don't create any side effects
-	// on GitHub Cloud version.
-	//
-	// See https://github.com/google/go-github/pull/2125 for full context.
 
 	// https://developer.github.com/changes/2014-12-09-new-attributes-for-stars-api/
 	mediaTypeStarringPreview = "application/vnd.github.v3.star+json"
@@ -99,9 +84,6 @@ const (
 
 	// https://developer.github.com/changes/2018-03-16-protected-branches-required-approving-reviews/
 	mediaTypeRequiredApprovingReviewsPreview = "application/vnd.github.luke-cage-preview+json"
-
-	// https://developer.github.com/changes/2018-05-07-new-checks-api-public-beta/
-	mediaTypeCheckRunsPreview = "application/vnd.github.antiope-preview+json"
 
 	// https://developer.github.com/enterprise/2.13/v3/repos/pre_receive_hooks/
 	mediaTypePreReceiveHooksPreview = "application/vnd.github.eye-scream-preview"
@@ -181,7 +163,6 @@ type Client struct {
 	Billing        *BillingService
 	Checks         *ChecksService
 	CodeScanning   *CodeScanningService
-	Dependabot     *DependabotService
 	Enterprise     *EnterpriseService
 	Gists          *GistsService
 	Git            *GitService
@@ -199,7 +180,6 @@ type Client struct {
 	Repositories   *RepositoriesService
 	SCIM           *SCIMService
 	Search         *SearchService
-	SecretScanning *SecretScanningService
 	Teams          *TeamsService
 	Users          *UsersService
 }
@@ -311,7 +291,6 @@ func NewClient(httpClient *http.Client) *Client {
 	c.Billing = (*BillingService)(&c.common)
 	c.Checks = (*ChecksService)(&c.common)
 	c.CodeScanning = (*CodeScanningService)(&c.common)
-	c.Dependabot = (*DependabotService)(&c.common)
 	c.Enterprise = (*EnterpriseService)(&c.common)
 	c.Gists = (*GistsService)(&c.common)
 	c.Git = (*GitService)(&c.common)
@@ -329,7 +308,6 @@ func NewClient(httpClient *http.Client) *Client {
 	c.Repositories = (*RepositoriesService)(&c.common)
 	c.SCIM = (*SCIMService)(&c.common)
 	c.Search = (*SearchService)(&c.common)
-	c.SecretScanning = (*SecretScanningService)(&c.common)
 	c.Teams = (*TeamsService)(&c.common)
 	c.Users = (*UsersService)(&c.common)
 	return c
@@ -484,10 +462,6 @@ type Response struct {
 	// Set ListCursorOptions.Cursor to this value when calling the endpoint again.
 	Cursor string
 
-	// For APIs that support before/after pagination, such as OrganizationsService.AuditLog.
-	Before string
-	After  string
-
 	// Explicitly specify the Rate type so Rate's String() receiver doesn't
 	// propagate to Response.
 	Rate Rate
@@ -543,16 +517,8 @@ func (r *Response) populatePageValues() {
 			}
 
 			page := q.Get("page")
-			since := q.Get("since")
-			before := q.Get("before")
-			after := q.Get("after")
-
-			if page == "" && before == "" && after == "" && since == "" {
+			if page == "" {
 				continue
-			}
-
-			if since != "" && page == "" {
-				page = since
 			}
 
 			for _, segment := range segments[1:] {
@@ -561,10 +527,8 @@ func (r *Response) populatePageValues() {
 					if r.NextPage, err = strconv.Atoi(page); err != nil {
 						r.NextPageToken = page
 					}
-					r.After = after
 				case `rel="prev"`:
 					r.PrevPage, _ = strconv.Atoi(page)
-					r.Before = before
 				case `rel="first"`:
 					r.FirstPage, _ = strconv.Atoi(page)
 				case `rel="last"`:
@@ -658,13 +622,9 @@ func (c *Client) BareDo(ctx context.Context, req *http.Request) (*Response, erro
 
 	response := newResponse(resp)
 
-	// Don't update the rate limits if this was a cached response.
-	// X-From-Cache is set by https://github.com/gregjones/httpcache
-	if response.Header.Get("X-From-Cache") == "" {
-		c.rateMu.Lock()
-		c.rateLimits[rateLimitCategory] = response.Rate
-		c.rateMu.Unlock()
-	}
+	c.rateMu.Lock()
+	c.rateLimits[rateLimitCategory] = response.Rate
+	c.rateMu.Unlock()
 
 	err = CheckResponse(resp)
 	if err != nil {
@@ -895,7 +855,7 @@ func (ae *AcceptedError) Is(target error) bool {
 }
 
 // AbuseRateLimitError occurs when GitHub returns 403 Forbidden response with the
-// "documentation_url" field value equal to "https://docs.github.com/en/free-pro-team@latest/rest/overview/resources-in-the-rest-api#secondary-rate-limits".
+// "documentation_url" field value equal to "https://docs.github.com/en/free-pro-team@latest/rest/reference/#abuse-rate-limits".
 type AbuseRateLimitError struct {
 	Response *http.Response // HTTP response that caused this error
 	Message  string         `json:"message"` // error message
@@ -1014,9 +974,7 @@ func CheckResponse(r *http.Response) error {
 			Response: errorResponse.Response,
 			Message:  errorResponse.Message,
 		}
-	case r.StatusCode == http.StatusForbidden &&
-		(strings.HasSuffix(errorResponse.DocumentationURL, "#abuse-rate-limits") ||
-			strings.HasSuffix(errorResponse.DocumentationURL, "#secondary-rate-limits")):
+	case r.StatusCode == http.StatusForbidden && strings.HasSuffix(errorResponse.DocumentationURL, "#abuse-rate-limits"):
 		abuseRateLimitError := &AbuseRateLimitError{
 			Response: errorResponse.Response,
 			Message:  errorResponse.Message,

@@ -188,8 +188,6 @@ func TestAPIMeta_Marshal(t *testing.T) {
 		Importer:                         []string{"i"},
 		Actions:                          []string{"a"},
 		Dependabot:                       []string{"d"},
-		SSHKeyFingerprints:               map[string]string{"a": "f"},
-		SSHKeys:                          []string{"k"},
 	}
 	want := `{
 		"hooks":["h"],
@@ -198,9 +196,7 @@ func TestAPIMeta_Marshal(t *testing.T) {
 		"pages":["p"],
 		"importer":["i"],
 		"actions":["a"],
-		"dependabot":["d"],
-		"ssh_key_fingerprints":{"a":"f"},
-		"ssh_keys":["k"]
+		"dependabot":["d"]
 	}`
 
 	testJSONMarshal(t, a, want)
