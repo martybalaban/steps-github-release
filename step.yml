@@ -95,6 +95,19 @@ inputs:
       - "yes"
       - "no"
     is_required: false
+- generate_release_notes: "yes"
+  opts:
+    title: Auto Generate Release Notes
+    summary: If 'yes' is selected, the body of the release will be auto generated.
+    description: |-
+      Whether to generate the name and body for this release.
+      If name is specified, the specified name will be used; otherwise, a name will be automatically generated.
+      If body is specified, the body will be pre-pended to the automatically generated notes.
+      Default: false
+    value_options:
+      - "yes"
+      - "no"
+    is_required: false
 - files_to_upload:
   opts:
     title: Files to upload
