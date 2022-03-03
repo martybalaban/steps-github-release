@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+    "github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-tools/go-steputils/stepconf"
