@@ -14,7 +14,6 @@ import (
 	"github.com/bitrise-tools/go-steputils/stepconf"
     "github.com/google/go-github/github"
     "golang.org/x/crypto/openpgp"
-    "golang.org/x/crypto/openpgp/armor"
 )
 
 // formats:
