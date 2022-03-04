@@ -138,9 +138,21 @@ func main() {
     log.Printf(newRelease.GetName())
     log.Printf(newRelease.GetBody())
 
-    exportEnvironmentWithEnvman("RELEASE_NAME", newRelease.GetName());
-    exportEnvironmentWithEnvman("RELEASE_URL", newRelease.GetBody());
-    exportEnvironmentWithEnvman("RELEASE_BODY", newRelease.GetBody());
+    exportEnvironmentWithEnvman("RELEASE_NAME", newRelease.GetName())
+    exportEnvironmentWithEnvman("RELEASE_URL", newRelease.GetHTMLURL())
+    exportEnvironmentWithEnvman("RELEASE_BODY", newRelease.GetBody())
+
+    log.Printf(os.Getenv("RELEASE_NAME"))
+    log.Printf(os.Getenv("RELEASE_BODY"))
+    log.Printf(os.Getenv("RELEASE_URL"))
+
+    os.Setenv("RELEASE_NAME",newRelease.GetName())
+    os.Setenv("RELEASE_BODY",newRelease.GetBody())
+    os.Setenv("RELEASE_URL",newRelease.GetHTMLURL())
+
+    log.Printf(os.Getenv("RELEASE_NAME"))
+    log.Printf(os.Getenv("RELEASE_BODY"))
+    log.Printf(os.Getenv("RELEASE_URL"))
 
 	if err := uploadFileListWithRetry(filelist, client, owner, repo, newRelease.GetID()); err != nil {
 		failf("error during upload: %s", err)
