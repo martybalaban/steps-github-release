@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-tools/go-steputils/stepconf"
     "github.com/google/go-github/github"
+    "github.com/bitrise-io/go-utils/command"
 )
 
 // formats:
@@ -148,12 +148,9 @@ func main() {
 }
 
 func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
-    c := exec.Command("envman", "add", "--key", keyStr, "--value", valueStr)
-    err := c.Run()
-    if err != nil {
-      return err
-    }
-    return nil
+	cmd := command.New("envman", "add", "--key", keyStr)
+	cmd.SetStdin(strings.NewReader(valueStr))
+	return cmd.Run()
 }
 
 func parseFilesListConfig(fileList string) ([]releaseAsset, error) {
