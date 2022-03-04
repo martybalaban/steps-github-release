@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -13,7 +14,6 @@ import (
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-tools/go-steputils/stepconf"
     "github.com/google/go-github/github"
-    "github.com/bitrise-io/go-utils/command"
 )
 
 // formats:
@@ -147,24 +147,18 @@ func main() {
     log.Printf(os.Getenv("RELEASE_BODY"))
     log.Printf(os.Getenv("RELEASE_URL"))
 
-    os.Setenv("RELEASE_NAME",newRelease.GetName())
-    os.Setenv("RELEASE_BODY",newRelease.GetBody())
-    os.Setenv("RELEASE_URL",newRelease.GetHTMLURL())
-
-    log.Infof("os.Setenv")
-    log.Printf(os.Getenv("RELEASE_NAME"))
-    log.Printf(os.Getenv("RELEASE_BODY"))
-    log.Printf(os.Getenv("RELEASE_URL"))
-
 	if err := uploadFileListWithRetry(filelist, client, owner, repo, newRelease.GetID()); err != nil {
 		failf("error during upload: %s", err)
 	}
 }
 
 func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
-	cmd := command.New("envman", "add", "--key", keyStr)
-	cmd.SetStdin(strings.NewReader(valueStr))
-	return cmd.Run()
+    c := exec.Command("envman", "add", "--key", keyStr, "--value", valueStr)
+    err := c.Run()
+    if err != nil {
+        failf("error during variable export: %s", err)
+    }
+    return err
 }
 
 func parseFilesListConfig(fileList string) ([]releaseAsset, error) {
