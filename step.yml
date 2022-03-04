@@ -152,13 +152,13 @@ outputs:
     summary: The name of the release
     description: |-
           The name of the release
-- RELEASE_BODY
+- RELEASE_BODY:
   opts:
     title: Body of the release
     summary: Body of the release
     description: |-
       Body of the release
-- RELEASE_URL
+- RELEASE_URL:
   opts:
     title: URL of the release
     summary: URL of the release
