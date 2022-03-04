@@ -146,6 +146,6 @@ inputs:
     is_expand: true
     is_required: true
 outputs:
-- RELEASE_NAME: $RELEASE_NAME
-- RELEASE_BODY: $RELEASE_BODY
-- RELEASE_URL: $RELEASE_URL
+- RELEASE_NAME
+- RELEASE_BODY
+- RELEASE_URL
