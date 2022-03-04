@@ -142,6 +142,7 @@ func main() {
     exportEnvironmentWithEnvman("RELEASE_URL", newRelease.GetHTMLURL())
     exportEnvironmentWithEnvman("RELEASE_BODY", newRelease.GetBody())
 
+    log.Infof("exportEnvironmentWithEnvman:")
     log.Printf(os.Getenv("RELEASE_NAME"))
     log.Printf(os.Getenv("RELEASE_BODY"))
     log.Printf(os.Getenv("RELEASE_URL"))
@@ -150,6 +151,7 @@ func main() {
     os.Setenv("RELEASE_BODY",newRelease.GetBody())
     os.Setenv("RELEASE_URL",newRelease.GetHTMLURL())
 
+    log.Infof("os.Setenv")
     log.Printf(os.Getenv("RELEASE_NAME"))
     log.Printf(os.Getenv("RELEASE_BODY"))
     log.Printf(os.Getenv("RELEASE_URL"))
