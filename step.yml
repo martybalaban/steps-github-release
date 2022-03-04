@@ -146,6 +146,21 @@ inputs:
     is_expand: true
     is_required: true
 outputs:
-- RELEASE_NAME
+- RELEASE_NAME:
+  opts:
+    title: The name of the release
+    summary: The name of the release
+    description: |-
+          The name of the release
 - RELEASE_BODY
+  opts:
+    title: Body of the release
+    summary: Body of the release
+    description: |-
+      Body of the release
 - RELEASE_URL
+  opts:
+    title: URL of the release
+    summary: URL of the release
+    description: |-
+      URL of the release
